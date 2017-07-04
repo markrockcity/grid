@@ -12,17 +12,21 @@ declare class Cell {
     x: number;
     y: number;
     z: number;
-    constructor(x: number, y: number, z: number);
+    m: number[][];
+    constructor(x: number, y: number, z: number, m?: number[][]);
 }
 declare class Neighborhood {
     length: number;
     cells: any[][];
     cell(x: number, y: number): Cell;
+    matrix(x: number, y: number): number[][];
 }
 declare var canvas: HTMLCanvasElement;
 declare var ctx: CanvasRenderingContext2D;
 declare var ww: any, hh: any, w: any, h: any, mh: any, mw: number;
 declare var grid: Grid;
+declare var mousedown: boolean;
+declare function apply(c: Cell, m: number[][]): void;
 declare var lastRate: number;
 declare var avgRate: number;
 declare function update(framerate: any): void;
