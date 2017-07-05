@@ -187,7 +187,7 @@ window.onload = () =>
     canvas.width  = window.innerWidth * 0.989;
 
     //FACTOR
-    const factor = 25;
+    const factor = Math.pow(2,4);
 
     ww = Math.floor(canvas.width / factor);
     hh = Math.floor(canvas.height / factor);
@@ -268,37 +268,6 @@ var avgRate  = 0;
 function update(framerate)
 {
 
-    /*function updateCell(c : Cell, n : Cell, m : number[][], l : number) : Cell
-    {
-        if (c==null || n==null)
-            return;
-
-        /*
-        l = Math.max(2,l);
-        var cn = [(c.x-n.x)*(1/l), (c.y-n.y)*(1/l), (c.z-n.z)*(1/l)];
-
-        n.x += cn[0];
-        n.y += cn[1];
-        n.z += cn[2];
-        //apply(n,m);
-
-        n.y = Math.max(-1,Math.min(1,n.y))
-        n.x = Math.max(-1,Math.min(1,n.x))
-        n.z = Math.max(-1,Math.min(1,n.z))
-
-        if (isNaN(n.x))  n.x = 0;
-        if (isNaN(n.y))  n.y = 0;
-        if (isNaN(n.z))  n.z = 0;
-         
-    }
-    
-    var mRight = [[1,0,0],[0,1,0],[0.7,0,0.7]];
-    var mLeft = [[1,0,0],[0,1,0],[-0.7,0,0.7]];
-    var mTop = [[1,0,0],[0,1,0],[0,0.7,0.7]];
-    var mBottom = [[1,0,0],[0,1,0],[0,-0.7,0.7]];
-    var mIdent = [[1,0,0],[0,1,0],[0,0,1]];*/
-
-
     grid.update((c:Cell, ns:Neighborhood) =>
     {
         var z = 0;
@@ -306,87 +275,41 @@ function update(framerate)
         for(var i=-1; i < 2; ++i)
         for(var j=-1; j < 2; ++j)
         {
-            var f = i==0 || j==0 ? 1 : 0.707;
+            if (i==0 && j==0) 
+                continue;
+            
+            var f = i==0 || j==0 ? 1 : 1;
 
             var n = ns.cell(i,j);            
             if (n != null)
             {
                 if (n.z  > c.z)
                 {
-                   z += (n.z/ns.length) * f;
+                   z += Math.pow(2,-10);
                 }
                 else if (n.z < c.z)
                 {
-                   z -= (n.z/ns.length) * f;
+                   z -= Math.pow(2,-10);
                 }
                 else
                 {
-                   //z -= 0.1;
+                   z -= Math.pow(2,-32);
                 }
                         
             }
         }
 
-        return apply(new Cell(c.x, c.y, c.z+z),[[1,0,0],[0,1,0],[0,0,1]);
+
+        z = Math.max(0,Math.min(1, c.z + z));
+
+        if (isNaN(z))
+            z = 0;
+
+       //return new Cell(c.x, c.y, z);
+
+         return apply(new Cell(c.x, c.y, z),[[1,0,0],[0,1,0],[1,0,1.001]]);
     });
    
-
-    /*
-    for(var i=0; i < grid.width; ++i)
-    for(var j=0; j < grid.height; ++j)
-    {
-        var c = grid.cell(i,j);
-        var ns = grid.neighbors(i,j);
-        var ns2 = [];  
-        var ms = [];
-
-        var a = [[-1,0], [1,0],  [0,-1], [0,1]];
-        for(var k=0; k < a.length; ++k)
-        {
-            var n = ns.cell(a[k][0],a[k][1]);
-            if (n != null)
-            {
-                ns2.push(n);
-                ms.push(ns.matrix(a[k][0],a[k][1]));
-            }
-        }
-
-
-        var x = [0,0,0];        
-
-        for(var k=0; k < ns2.length; ++k)
-        {
-            x[0] += ns2[k].x;
-            x[1] += ns2[k].y;
-            x[2] += ns2[k].z;
-        }
-                
-
-
-        for(var k=ns2.length-1; k > -1; --k)
-            updateCell(c,ns2[k],ms[k],ns2.length);
-        
-        
-        var y = ns2.length/(ns2.length+1);
-        //y = (-2/3);
-        var nc = [(x[0]-c.x)*y, (x[1]-c.y)*y, (x[2]-c.z)*y];
-        c.x += nc[0];
-        c.y += nc[1];
-        c.z += nc[2] * 0.001;
-
-
-        //die off
-        c.x *= 0.99;
-        c.y *= 0.99;
-        c.z *= 0.99;
-
-
-        c.z = Math.max(0,Math.min(1,c.z));
-
-        if (isNaN(c.z))
-            c.z = 0;
-    }*/
-
 
     avgRate  = (framerate + lastRate)/2;
     lastRate = framerate;        
@@ -410,9 +333,10 @@ function render()
 
         var c = grid.cell(i,j);
 
-        var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
-        var x = Math.max(0,Math.min(255,Math.floor(255 * M * 30)));
-        ctx.fillStyle = `rgb(0,${x},${x})`
+        //var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
+        var M = c.z;
+        var x = Math.max(0,Math.min(255,Math.floor(255 * M)));
+        ctx.fillStyle = `rgba(0,${x},${x},1)`
         ctx.fillRect(w * i , h * j, w+1, h+1);
     }
 
@@ -439,12 +363,12 @@ function render()
             ctx.lineWidth = 1+c.z*1000;
             ctx.beginPath();
             ctx.moveTo(mw - 0.7, mh - 0.7);
-            //ctx.lineTo(lw + 0.7, lh + 0.7);
-            ctx.moveTo(mw +10, mh + 10);
+            ctx.lineTo(lw + 0.7, lh + 0.7);
+            //ctx.lineTo(mw +10, mh + 10);
             ctx.closePath();
             ctx.stroke();
-            //ctx.fillStyle = "rgba(255,0,0,1)";
-            //ctx.fillRect(w * i + w/2 + c.x*100 * w - 1, h * j - h/2 + c.y*100 * h - 1,1+Math.abs(c.z*100),1+Math.abs(c.z*100))
+            ctx.fillStyle = "rgba(255,0,0,1)";
+            ctx.fillRect(w * i + w/2 + c.x*100 * w - 1, h * j - h/2 + c.y*100 * h - 1,1+Math.abs(c.z*100),1+Math.abs(c.z*100))
         }
     }
 
