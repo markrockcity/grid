@@ -157,7 +157,12 @@ class Cell
 class Neighborhood
 {
     length = 0;
-    cells  = [[null,null,null],[null,null],[null,null,null]];
+    readonly cells : Cell[][];
+
+    constructor()
+    {
+        this.cells = [[null,null,null],[null,null],[null,null,null]];
+    }
     
     cell(x:number, y:number) : Cell 
     {
@@ -258,9 +263,9 @@ function apply(c : Cell, m : number[][])
    var cy = c.x * m[0][1] + c.y * m[1][1] + c.z * m[2][1];
    var cz = c.x * m[0][2] + c.y * m[1][2] + c.z * m[2][2];
 
-   cx = Math.max(0,Math.min(1,cx));
-   cy = Math.max(0,Math.min(1,cy));
-   cz = Math.max(0,Math.min(1,cz));
+   cx = Math.max(0,Math.min(1,cx)); if (isNaN(cx)) cx = 0;
+   cy = Math.max(0,Math.min(1,cy)); if (isNaN(cy)) cy = 0;
+   cz = Math.max(0,Math.min(1,cz)); if (isNaN(cz)) cz = 0;
 
    return new Cell(cx,cy,cz);
 }
@@ -282,16 +287,16 @@ function update(framerate)
             if (i==0 && j==0) 
                 continue;
             
-            var f = i==0 || j==0 ? 1 : 1;
+            var f = i==0 || j==0 ? 1 : 0.7;
 
             var n = ns.cell(i,j);            
             if (n != null)
             {
                
-                c = apply(c, [[1,0,0],[0,1,0],[(i),j,1.001]]);                        
+                c = apply(c, [[1,0,0],[0,1,0],[0.01*n.z*i,0.99*n.z*j,1]]);                        
             }
         }
-
+               
 
        //return new Cell(c.x, c.y, z);
 
@@ -323,7 +328,7 @@ function render()
 
         var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
         //var M = c.z;
-        var x = Math.max(0,Math.min(255,Math.floor(255 * M)));
+        var x = Math.max(0,Math.min(255,Math.floor(255 * (M/2))));
         ctx.fillStyle = `rgba(0,${x},${x},1)`
         ctx.fillRect(w * i , h * j, w+1, h+1);
     }
@@ -346,18 +351,18 @@ function render()
             var lw = mw + c.x*s * w ;
             var lh = mh + c.y*s * h;
             var grd=ctx.createLinearGradient(mw,mh,lw,lh);
-            grd.addColorStop(0,"rgba(0,50,0,1)");
+            grd.addColorStop(0,"rgba(0,10,0,0.7)");
             grd.addColorStop(1,"rgba(0,255,0,1)");
             ctx.strokeStyle = grd;
-            ctx.lineWidth = 1+c.z*s;
+            ctx.lineWidth = 1+c.z*s*(s/2);
             ctx.beginPath();
-            ctx.moveTo(mw, mh+h);
+            ctx.moveTo(mw - 0.7, mh+h - 0.7);
             ctx.lineTo(lw + 0.7, lh + 0.7);
             //ctx.lineTo(mw +10, mh + 10);
             ctx.closePath();
             ctx.stroke();
-            ctx.fillStyle = "rgba(255,0,0,0.2)";
-            ctx.fillRect(w * i + w/2 + c.x*s * w - 1, h * j - h/2 + c.y*s * h - 1,1+Math.abs(c.z*s),1+Math.abs(c.z*s))
+            ctx.fillStyle = "rgba(255,0,0,0.7)";
+            ctx.fillRect(w * i + w/2 + c.x*s * w - 1, h * j + (h/2) * (c.x+c.y==0 ? 1 : -1)  + c.y*s * h - 1,1+Math.abs(c.z*s),1+Math.abs(c.z*s))
         }
     }
 

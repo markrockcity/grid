@@ -21,7 +21,8 @@ declare class Cell {
 }
 declare class Neighborhood {
     length: number;
-    cells: any[][];
+    readonly cells: Cell[][];
+    constructor();
     cell(x: number, y: number): Cell;
 }
 declare var canvas: HTMLCanvasElement;
