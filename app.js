@@ -190,7 +190,7 @@ function update(framerate) {
                 var f = i == 0 || j == 0 ? 1 : 0.7;
                 var n = ns.cell(i, j);
                 if (n != null) {
-                    c = apply(c, [[1, 0, 0], [0, 1, 0], [0.01 * n.z * i, 0.99 * n.z * j, 1]]);
+                    c = apply(c, [[1, 0, 0], [0, 1, 0], [0.99 * n.z * i + rand(-0.01, 0.01), 0.99 * n.z * j + rand(-0.01, 0.01), 1.001]]);
                 }
             }
         //return new Cell(c.x, c.y, z);
