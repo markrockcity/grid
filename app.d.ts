@@ -7,9 +7,10 @@ declare class Grid {
     readonly height: number;
     private grid1;
     private grid2;
+    private readonly wall;
     constructor(width: number, height: number);
     cell(x: number, y: number): Cell;
-    glub(x: number, y: number, d: number): void;
+    setCell(x: number, y: number, c: Cell): void;
     neighbors(x: number, y: number): Neighborhood;
     update(updateCell: UpdateCellFn): void;
 }
@@ -22,8 +23,10 @@ declare class Cell {
 declare class Neighborhood {
     length: number;
     readonly cells: Cell[][];
+    readonly matrixes: number[][][][];
     constructor();
     cell(x: number, y: number): Cell;
+    matrix(x: number, y: number): number[][];
 }
 declare var canvas: HTMLCanvasElement;
 declare var ctx: CanvasRenderingContext2D;
@@ -31,6 +34,8 @@ declare var ww: any, hh: any, w: any, h: any, mh: any, mw: number;
 declare var grid: Grid;
 declare var mousedown: boolean;
 declare function apply(c: Cell, m: number[][]): Cell;
+declare function sum(cells: Cell[]): Cell;
+declare function zprod(cells: Cell[]): number;
 declare var lastRate: number;
 declare var avgRate: number;
 declare function update(framerate: any): void;

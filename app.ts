@@ -25,7 +25,9 @@ class Grid
     private grid1 : Cell[] = [];
     private grid2 : Cell[] = [];
 
+    private readonly wall = new Cell(0,0,0);
 
+    
     constructor(width: number, height: number)
     {
        this.width = width;
@@ -45,51 +47,59 @@ class Grid
         return this.cells[y*this.width+x];
     }
 
-    glub(x:number, y:number, d:number)
+    
+    setCell(x:number, y:number, c:Cell)
     {
-        var c = this.cells[y*this.width+x];
-        this.cells[y*this.width+x] = new Cell(c.x,c.y,c.z+d);
+        this.cells[y*this.width+x] = c;
     }
 
     neighbors(x:number, y:number) : Neighborhood
     {
         var ns = new Neighborhood();
+        var c  = this.cell(x,y);
 
         if (x > 0)
         {
             //top-left
             if (y > 0)
             {
-                ns.cells[0][0] = this.cell(x-1, y-1);
-                ns.length++;
+                //ns.cells[0][0] = this.cell(x-1, y-1);
+                //ns.length++;
             }
 
             //left
             ns.cells[1][0]=(this.cell(x-1,y));
+            ns.matrixes[1][0] = [[1,0,0],[0,1,0],[0.707,0,0.707]];
             ns.length++;
 
 
             //bottom-left
             if (y < this.height-1)
             {
-                ns.cells[2][0]=(this.cell(x-1,y+1));
-                ns.length++;
+                //ns.cells[2][0]=(this.cell(x-1,y+1));
+                //ns.length++;
             }
 
+        }
+        else
+        {
+            //left wall
+            ns.cells[1][0] = this.wall;
+            ns.matrixes[1][0] = [[c.x < 0 ? -1 : 1, 0, 0],[0,1,0],[0,0,1]];
         }
 
         //top
         if (y > 0)
         {
-            ns.cells[0][1] = this.cell(x,y-1);
-            ns.length++;
+            //ns.cells[0][1] = this.cell(x,y-1);
+            //ns.length++;
         }
 
         //bottom
         if (y < this.height-1)
         {
-            ns.cells[2][1] = this.cell(x,y+1);
-            ns.length++;
+            //ns.cells[2][1] = this.cell(x,y+1);
+            //ns.length++;
         }
 
         
@@ -98,20 +108,27 @@ class Grid
             //top-right
             if (y > 0)
             {
-                ns.cells[0][2] = this.cell(x+1, y-1);
-                ns.length++;
+                //ns.cells[0][2] = this.cell(x+1, y-1);
+                //ns.length++;
             }
 
             //right
             ns.cells[1][1]=(this.cell(x+1,y));
+            ns.matrixes[1][1] = [[1,0,0],[0,1,0],[-0.707,0,0.707]];
             ns.length++;
 
             //bottom-right
             if (y < this.height-1)
             {
-                ns.cells[2][2]=(this.cell(x+1,y+1));
-                ns.length++;
+                //ns.cells[2][2]=(this.cell(x+1,y+1));
+                //ns.length++;
             }
+        }
+        else
+        {
+            //right-wall
+            ns.cells[1][1] = this.wall;
+            ns.matrixes[1][1] = [[c.x > 0 ? -1 : 1, 0, 0],[0,1,0],[0,0,1]];
         }
 
 
@@ -122,7 +139,7 @@ class Grid
 
     update(updateCell : UpdateCellFn) : void
     {
-        var nextGrid = this.cells == this.grid1 ? this.grid2 : this.grid1;
+        var nextGrid = (this.cells==this.grid1 ? this.grid2 : this.grid1);
 
         for(var i=0; i < this.width; ++i)
         for(var j=0; j < this.height; ++j)
@@ -158,10 +175,12 @@ class Neighborhood
 {
     length = 0;
     readonly cells : Cell[][];
+    readonly matrixes: number[][][][] // e.g., matrixes[x][y] = [[...],[...],[...]]
 
     constructor()
     {
         this.cells = [[null,null,null],[null,null],[null,null,null]];
+        this.matrixes = [[null,null,null],[null,null],[null,null,null]];
     }
     
     cell(x:number, y:number) : Cell 
@@ -171,6 +190,16 @@ class Neighborhood
         else
             return this.cells[y+1][x+1];
     }    
+
+    matrix(x:number, y:number) : number[][]
+    {
+        if (y==0) 
+            return this.matrixes[1][x==-1 ? 0 : 1]
+        else
+            return this.matrixes[y+1][x+1];
+    }
+
+    
 }
 
 
@@ -213,7 +242,8 @@ window.onload = () =>
     {
         x = Math.floor((pageX-canvas.offsetLeft) / w);
         y = Math.floor((pageY-canvas.offsetTop) / h);
-        grid.glub(x,y,d);
+        var c = grid.cell(x,y);
+        grid.setCell(x,y,new Cell(-3, c.y, 1));
         //c.x -= d*3;
         //c.y -= d;
     }
@@ -270,6 +300,26 @@ function apply(c : Cell, m : number[][])
    return new Cell(cx,cy,cz);
 }
 
+function sum(cells:Cell[]) : Cell
+{
+   var sum = [0,0,0];
+   for(var i = 0; i < cells.length; ++i)
+   {
+       sum[0] += cells[i].x;
+       sum[1] += cells[i].y;
+       sum[2] += cells[i].z;
+   }
+   return new Cell(sum[0],sum[1],sum[2]);
+}
+
+function zprod(cells:Cell[]) : number
+{
+    var prod = 1;
+    for(var i = 0; i < cells.length; ++i)
+        prod *= cells[i].z;
+    return prod;
+}
+
 
 //UPDATE()
 var lastRate = 0;
@@ -281,6 +331,8 @@ function update(framerate)
     {
         var z = 0;
 
+        var rs : Cell[] = [];
+
         for(var i=-1; i < 2; ++i)
         for(var j=-1; j < 2; ++j)
         {
@@ -289,18 +341,22 @@ function update(framerate)
             
             var f = i==0 || j==0 ? 1 : 0.7;
 
-            var n = ns.cell(i,j);            
+            var n = ns.cell(i,j);    
+            
+           
             if (n != null)
             {
-               
-                c = apply(c, [[1,0,0],[0,1,0],[0.99*n.z*i+rand(-0.01,0.01),0.99*n.z*j+rand(-0.01,0.01),1.001]]);                        
+                var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
+                var r = apply(c, ns.matrix(i,j));
+                rs.push(r);
             }
         }
                
+        var s = sum(rs);
+        var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
 
-       //return new Cell(c.x, c.y, z);
-
-         return c
+        return r;
+       
     });
    
 

@@ -14,6 +14,7 @@ var Grid = (function () {
         this.cells = [];
         this.grid1 = [];
         this.grid2 = [];
+        this.wall = new Cell(0, 0, 0);
         this.width = width;
         this.height = height;
         for (var i = 0; i < width * height; ++i) {
@@ -25,56 +26,68 @@ var Grid = (function () {
     Grid.prototype.cell = function (x, y) {
         return this.cells[y * this.width + x];
     };
-    Grid.prototype.glub = function (x, y, d) {
-        var c = this.cells[y * this.width + x];
-        this.cells[y * this.width + x] = new Cell(c.x, c.y, c.z + d);
+    Grid.prototype.setCell = function (x, y, c) {
+        this.cells[y * this.width + x] = c;
     };
     Grid.prototype.neighbors = function (x, y) {
         var ns = new Neighborhood();
+        var c = this.cell(x, y);
         if (x > 0) {
             //top-left
             if (y > 0) {
-                ns.cells[0][0] = this.cell(x - 1, y - 1);
-                ns.length++;
+                //ns.cells[0][0] = this.cell(x-1, y-1);
+                //ns.length++;
             }
             //left
             ns.cells[1][0] = (this.cell(x - 1, y));
+            ns.matrixes[1][0] = [[1, 0, 0], [0, 1, 0], [0.707, 0, 0.707]];
             ns.length++;
             //bottom-left
             if (y < this.height - 1) {
-                ns.cells[2][0] = (this.cell(x - 1, y + 1));
-                ns.length++;
+                //ns.cells[2][0]=(this.cell(x-1,y+1));
+                //ns.length++;
             }
+        }
+        else {
+            //left wall
+            ns.cells[1][0] = this.wall;
+            ns.matrixes[1][0] = [[c.x < 0 ? -1 : 1, 0, 0], [0, 1, 0], [0, 0, 1]];
         }
         //top
         if (y > 0) {
-            ns.cells[0][1] = this.cell(x, y - 1);
-            ns.length++;
+            //ns.cells[0][1] = this.cell(x,y-1);
+            //ns.length++;
         }
         //bottom
         if (y < this.height - 1) {
-            ns.cells[2][1] = this.cell(x, y + 1);
-            ns.length++;
+            //ns.cells[2][1] = this.cell(x,y+1);
+            //ns.length++;
         }
         if (x < this.width - 1) {
             //top-right
             if (y > 0) {
-                ns.cells[0][2] = this.cell(x + 1, y - 1);
-                ns.length++;
+                //ns.cells[0][2] = this.cell(x+1, y-1);
+                //ns.length++;
             }
             //right
             ns.cells[1][1] = (this.cell(x + 1, y));
+            ns.matrixes[1][1] = [[1, 0, 0], [0, 1, 0], [-0.707, 0, 0.707]];
             ns.length++;
             //bottom-right
             if (y < this.height - 1) {
-                ns.cells[2][2] = (this.cell(x + 1, y + 1));
-                ns.length++;
+                //ns.cells[2][2]=(this.cell(x+1,y+1));
+                //ns.length++;
             }
+        }
+        else {
+            //right-wall
+            ns.cells[1][1] = this.wall;
+            ns.matrixes[1][1] = [[c.x > 0 ? -1 : 1, 0, 0], [0, 1, 0], [0, 0, 1]];
         }
         return ns;
     };
     Grid.prototype.update = function (updateCell) {
-        var nextGrid = this.cells == this.grid1 ? this.grid2 : this.grid1;
+        var nextGrid = (this.cells == this.grid1 ? this.grid2 : this.grid1);
         for (var i = 0; i < this.width; ++i)
             for (var j = 0; j < this.height; ++j) {
                 var c = this.cell(i, j);
@@ -100,12 +113,19 @@ var Neighborhood = (function () {
     function Neighborhood() {
         this.length = 0;
         this.cells = [[null, null, null], [null, null], [null, null, null]];
+        this.matrixes = [[null, null, null], [null, null], [null, null, null]];
     }
     Neighborhood.prototype.cell = function (x, y) {
         if (y == 0)
             return this.cells[1][x == -1 ? 0 : 1];
         else
             return this.cells[y + 1][x + 1];
+    };
+    Neighborhood.prototype.matrix = function (x, y) {
+        if (y == 0)
+            return this.matrixes[1][x == -1 ? 0 : 1];
+        else
+            return this.matrixes[y + 1][x + 1];
     };
     return Neighborhood;
 }());
@@ -135,7 +155,8 @@ window.onload = function () {
     function doEvent(pageX, pageY) {
         x = Math.floor((pageX - canvas.offsetLeft) / w);
         y = Math.floor((pageY - canvas.offsetTop) / h);
-        grid.glub(x, y, d);
+        var c = grid.cell(x, y);
+        grid.setCell(x, y, new Cell(-3, c.y, 1));
         //c.x -= d*3;
         //c.y -= d;
     }
@@ -177,12 +198,28 @@ function apply(c, m) {
         cz = 0;
     return new Cell(cx, cy, cz);
 }
+function sum(cells) {
+    var sum = [0, 0, 0];
+    for (var i = 0; i < cells.length; ++i) {
+        sum[0] += cells[i].x;
+        sum[1] += cells[i].y;
+        sum[2] += cells[i].z;
+    }
+    return new Cell(sum[0], sum[1], sum[2]);
+}
+function zprod(cells) {
+    var prod = 1;
+    for (var i = 0; i < cells.length; ++i)
+        prod *= cells[i].z;
+    return prod;
+}
 //UPDATE()
 var lastRate = 0;
 var avgRate = 0;
 function update(framerate) {
     grid.update(function (c, ns) {
         var z = 0;
+        var rs = [];
         for (var i = -1; i < 2; ++i)
             for (var j = -1; j < 2; ++j) {
                 if (i == 0 && j == 0)
@@ -190,11 +227,14 @@ function update(framerate) {
                 var f = i == 0 || j == 0 ? 1 : 0.7;
                 var n = ns.cell(i, j);
                 if (n != null) {
-                    c = apply(c, [[1, 0, 0], [0, 1, 0], [0.99 * n.z * i + rand(-0.01, 0.01), 0.99 * n.z * j + rand(-0.01, 0.01), 1.001]]);
+                    var c = new Cell((c.x - n.x) / ns.length, (c.y - n.y) / ns.length, (c.z - n.z) / ns.length);
+                    var r = apply(c, ns.matrix(i, j));
+                    rs.push(r);
                 }
             }
-        //return new Cell(c.x, c.y, z);
-        return c;
+        var s = sum(rs);
+        var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
+        return r;
     });
     avgRate = (framerate + lastRate) / 2;
     lastRate = framerate;
