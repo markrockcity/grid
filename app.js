@@ -153,15 +153,17 @@ window.onload = function () {
     //when clicking on canvas:
     var x, y;
     // DO EVENT ////////////////////////////////////////////////////////////////
-    function doEvent(pageX, pageY) {
+    function doEvent(pageX, pageY, button) {
+        if (button === void 0) { button = 0; }
         x = Math.floor((pageX - canvas.offsetLeft) / w);
         y = Math.floor((pageY - canvas.offsetTop) / h);
         var c = grid.cell(x, y);
-        grid.setCell(x, y, new Cell(c.x, c.y, 1));
+        grid.setCell(x, y, new Cell(c.x, c.y, button == 2 ? 0 : 1));
     }
     canvas.addEventListener("mousedown", function (event) {
         mousedown = true;
-        doEvent(event.pageX, event.pageY);
+        console.log(event.button);
+        doEvent(event.pageX, event.pageY, event.button);
     }, false);
     canvas.addEventListener("touchstart", function (event) {
         mousedown = true;
@@ -173,13 +175,14 @@ window.onload = function () {
     canvas.addEventListener("mousemove", function (event) {
         if (paused || !mousedown)
             return;
-        doEvent(event.pageX, event.pageY);
+        doEvent(event.pageX, event.pageY, event.button);
     }, false);
     canvas.addEventListener("touchmove", function (event) {
         if (paused || !mousedown)
             return;
         doEvent(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
     }, false);
+    canvas.addEventListener("contextmenu", function (ev) { return ev.preventDefault(); });
     //KEYDOWN EVENT
     document.addEventListener("keydown", function (event) {
         if (event.keyCode == 32) {
@@ -251,10 +254,10 @@ function update(framerate) {
                     // var r = apply(c, ns.matrix(i,j));
                     //rs.push(r);
                     var d = n.z - c.z;
-                    if (d > 1 / 50)
-                        z += 1 / 255;
-                    else if (d < -1 / 50)
-                        z -= 1 / 255;
+                    if (d > 0.01)
+                        z += 1 / 512;
+                    else if (d < -0.01)
+                        z -= 1 / 512;
                     else if (randi(0, 1000) < 2)
                         z -= 1 / 256;
                 }
