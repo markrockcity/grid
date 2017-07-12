@@ -197,9 +197,7 @@ class Neighborhood
             return this.matrixes[1][x==-1 ? 0 : 1]
         else
             return this.matrixes[y+1][x+1];
-    }
-
-    
+    }    
 }
 
 
@@ -238,14 +236,14 @@ window.onload = () =>
 
     //when clicking on canvas:
     var x,y : number;
+
+    // DO EVENT ////////////////////////////////////////////////////////////////
     function doEvent(pageX : number, pageY : number)
     {
         x = Math.floor((pageX-canvas.offsetLeft) / w);
         y = Math.floor((pageY-canvas.offsetTop) / h);
         var c = grid.cell(x,y);
-        grid.setCell(x,y,new Cell(-3, c.y, 1));
-        //c.x -= d*3;
-        //c.y -= d;
+        grid.setCell(x,y,c.z > 0 ? new Cell(0,0,0) : new Cell(-1, -1, c.z > 0 ? 0 : 1));
     }
     
     canvas.addEventListener("mousedown", event =>
@@ -287,6 +285,7 @@ window.onload = () =>
     main();
 };
 
+//apply()
 function apply(c : Cell, m : number[][])
 {
    var cx = c.x * m[0][0] + c.y * m[1][0] + c.z * m[2][0];
@@ -300,6 +299,7 @@ function apply(c : Cell, m : number[][])
    return new Cell(cx,cy,cz);
 }
 
+//sum()
 function sum(cells:Cell[]) : Cell
 {
    var sum = [0,0,0];
@@ -312,6 +312,7 @@ function sum(cells:Cell[]) : Cell
    return new Cell(sum[0],sum[1],sum[2]);
 }
 
+//zprod()
 function zprod(cells:Cell[]) : number
 {
     var prod = 1;
@@ -321,7 +322,7 @@ function zprod(cells:Cell[]) : number
 }
 
 
-//UPDATE()
+//UPDATE() ****************************************************************
 var lastRate = 0;
 var avgRate  = 0; 
 function update(framerate)
@@ -329,9 +330,9 @@ function update(framerate)
 
     grid.update((c:Cell, ns:Neighborhood) =>
     {
-        var z = 0;
-
-        var rs : Cell[] = [];
+        //var z = 0;
+        
+        //var rs : Cell[] = [];
 
         for(var i=-1; i < 2; ++i)
         for(var j=-1; j < 2; ++j)
@@ -339,23 +340,24 @@ function update(framerate)
             if (i==0 && j==0) 
                 continue;
             
-            var f = i==0 || j==0 ? 1 : 0.7;
+            //var f = i==0 || j==0 ? 1 : 0.7;
 
             var n = ns.cell(i,j);    
             
            
             if (n != null)
             {
-                var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
-                var r = apply(c, ns.matrix(i,j));
-                rs.push(r);
+                //var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
+                // var r = apply(c, ns.matrix(i,j));
+                //rs.push(r);
             }
         }
                
-        var s = sum(rs);
-        var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
+        //var s = sum(rs);
+        //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
 
-        return r;
+        //return r;
+        return c;
        
     });
    
@@ -366,7 +368,7 @@ function update(framerate)
 
 
 
-//RENDER()
+//RENDER() ################################################################
 function render()
 {
     //var bgColor = `rgb(0,0,0)`;
@@ -382,9 +384,9 @@ function render()
 
         var c = grid.cell(i,j);
 
-        var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
+        //var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
         //var M = c.z;
-        var x = Math.max(0,Math.min(255,Math.floor(255 * (M/2))));
+        var x = Math.max(0,Math.min(255,Math.floor(512 * c.z)));
         ctx.fillStyle = `rgba(0,${x},${x},1)`
         ctx.fillRect(w * i , h * j, w+1, h+1);
     }
@@ -401,24 +403,33 @@ function render()
 
             //ctx.strokeStyle = "rgba(0,205,0,0.25)";
 
-            var s = 4;
+            var s = 1;
+            var t = s * 5;
             var mw = w * i + w/2;
             var mh = h * j - h/2;
             var lw = mw + c.x*s * w ;
             var lh = mh + c.y*s * h;
+
+            //line
             var grd=ctx.createLinearGradient(mw,mh,lw,lh);
             grd.addColorStop(0,"rgba(0,10,0,0.7)");
             grd.addColorStop(1,"rgba(0,255,0,1)");
             ctx.strokeStyle = grd;
-            ctx.lineWidth = 1+c.z*s*(s/2);
+            ctx.lineWidth = 1+c.z*t;
             ctx.beginPath();
-            ctx.moveTo(mw - 0.7, mh+h - 0.7);
-            ctx.lineTo(lw + 0.7, lh + 0.7);
+            ctx.moveTo(mw, mh+h+0.5);
+            ctx.lineTo(lw, lh+h+0.5);
             //ctx.lineTo(mw +10, mh + 10);
             ctx.closePath();
             ctx.stroke();
+
+            //tip
             ctx.fillStyle = "rgba(255,0,0,0.7)";
-            ctx.fillRect(w * i + w/2 + c.x*s * w - 1, h * j + (h/2) * (c.x+c.y==0 ? 1 : -1)  + c.y*s * h - 1,1+Math.abs(c.z*s),1+Math.abs(c.z*s))
+            ctx.fillRect
+                (w * i + (w/2) + c.x*s * w - Math.abs(c.z*t)/2, 
+                 h * j + (h/2) + c.y*s * h - Math.abs(c.z*t)/2,
+                 0.5+Math.abs(c.z*t),
+                 0.5+Math.abs(c.z*t));
         }
     }
 
