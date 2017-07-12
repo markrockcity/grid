@@ -35,8 +35,8 @@ var Grid = (function () {
         if (x > 0) {
             //top-left
             if (y > 0) {
-                //ns.cells[0][0] = this.cell(x-1, y-1);
-                //ns.length++;
+                ns.cells[0][0] = this.cell(x - 1, y - 1);
+                ns.length++;
             }
             //left
             ns.cells[1][0] = (this.cell(x - 1, y));
@@ -44,8 +44,8 @@ var Grid = (function () {
             ns.length++;
             //bottom-left
             if (y < this.height - 1) {
-                //ns.cells[2][0]=(this.cell(x-1,y+1));
-                //ns.length++;
+                ns.cells[2][0] = (this.cell(x - 1, y + 1));
+                ns.length++;
             }
         }
         else {
@@ -55,19 +55,19 @@ var Grid = (function () {
         }
         //top
         if (y > 0) {
-            //ns.cells[0][1] = this.cell(x,y-1);
-            //ns.length++;
+            ns.cells[0][1] = this.cell(x, y - 1);
+            ns.length++;
         }
         //bottom
         if (y < this.height - 1) {
-            //ns.cells[2][1] = this.cell(x,y+1);
-            //ns.length++;
+            ns.cells[2][1] = this.cell(x, y + 1);
+            ns.length++;
         }
         if (x < this.width - 1) {
             //top-right
             if (y > 0) {
-                //ns.cells[0][2] = this.cell(x+1, y-1);
-                //ns.length++;
+                ns.cells[0][2] = this.cell(x + 1, y - 1);
+                ns.length++;
             }
             //right
             ns.cells[1][1] = (this.cell(x + 1, y));
@@ -75,8 +75,8 @@ var Grid = (function () {
             ns.length++;
             //bottom-right
             if (y < this.height - 1) {
-                //ns.cells[2][2]=(this.cell(x+1,y+1));
-                //ns.length++;
+                ns.cells[2][2] = (this.cell(x + 1, y + 1));
+                ns.length++;
             }
         }
         else {
@@ -157,7 +157,7 @@ window.onload = function () {
         x = Math.floor((pageX - canvas.offsetLeft) / w);
         y = Math.floor((pageY - canvas.offsetTop) / h);
         var c = grid.cell(x, y);
-        grid.setCell(x, y, c.z > 0 ? new Cell(0, 0, 0) : new Cell(-1, -1, c.z > 0 ? 0 : 1));
+        grid.setCell(x, y, new Cell(c.x, c.y, 1));
     }
     canvas.addEventListener("mousedown", function (event) {
         mousedown = true;
@@ -180,6 +180,23 @@ window.onload = function () {
             return;
         doEvent(event.changedTouches[0].pageX, event.changedTouches[0].pageY);
     }, false);
+    //KEYDOWN EVENT
+    document.addEventListener("keydown", function (event) {
+        if (event.keyCode == 32) {
+            if (!paused)
+                paused = true;
+            else {
+                update(-1);
+                render();
+            }
+        }
+    });
+    document.addEventListener("keyup", function (event) {
+        if (event.keyCode == 27) {
+            paused = false;
+            main();
+        }
+    });
     main();
 };
 //apply()
@@ -222,6 +239,7 @@ function update(framerate) {
     grid.update(function (c, ns) {
         //var z = 0;
         //var rs : Cell[] = [];
+        var z = c.z;
         for (var i = -1; i < 2; ++i)
             for (var j = -1; j < 2; ++j) {
                 if (i == 0 && j == 0)
@@ -232,12 +250,19 @@ function update(framerate) {
                     //var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
                     // var r = apply(c, ns.matrix(i,j));
                     //rs.push(r);
+                    var d = n.z - c.z;
+                    if (d > 1 / 50)
+                        z += 1 / 255;
+                    else if (d < -1 / 50)
+                        z -= 1 / 255;
+                    else if (randi(0, 1000) < 2)
+                        z -= 1 / 256;
                 }
             }
         //var s = sum(rs);
         //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
         //return r;
-        return c;
+        return new Cell(c.x, c.y, z);
     });
     avgRate = (framerate + lastRate) / 2;
     lastRate = framerate;
@@ -253,11 +278,11 @@ function render() {
             var c = grid.cell(i, j);
             //var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
             //var M = c.z;
-            var x = Math.max(0, Math.min(255, Math.floor(512 * c.z)));
-            ctx.fillStyle = "rgba(0," + x + "," + x + ",1)";
+            var x = Math.max(0, Math.min(255, Math.floor(255 * c.z)));
+            ctx.fillStyle = "rgba(" + x + "," + x + "," + x + ",1)";
             ctx.fillRect(w * i, h * j, w + 1, h + 1);
         }
-    var renderVector = true;
+    var renderVector = false;
     if (renderVector) {
         for (var i = 0; i < grid.width; ++i)
             for (var j = 0; j < grid.height; ++j) {
