@@ -1,3 +1,4 @@
+//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -16,7 +17,7 @@ var Grid1 = (function (_super) {
     }
     Grid1.prototype.activateCell = function (x, y, button) {
         var c = this.cell(x, y);
-        this.setCell(x, y, new Cell1(c.x, c.y, button == 2 ? 0 : 1));
+        this.setCell(x, y, new Cell1(c.x, c.y, button == 2 ? 0 : 2));
     };
     Grid1.prototype.createCell = function () {
         return new Cell1(0, 0, 0);
@@ -99,7 +100,7 @@ window.onload = function () {
     }
     canvas.addEventListener("mousedown", function (event) {
         mousedown = true;
-        console.log(event.button);
+        //console.log(event.button);
         doEvent(event.pageX, event.pageY, event.button);
     }, false);
     canvas.addEventListener("touchstart", function (event) {

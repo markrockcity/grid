@@ -1,11 +1,13 @@
-﻿//GRID class
+﻿//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
+
+//GRID class
 class Grid1 extends Grid<Cell1>
 {
     
     activateCell(x: number, y: number, button: number) 
     {
         var c = this.cell(x,y);
-        this.setCell(x,y,new Cell1(c.x, c.y, button == 2 ? 0 : 1));  
+        this.setCell(x,y,new Cell1(c.x, c.y, button == 2 ? 0 : 2));  
     }
 
     createCell(): Cell1 
@@ -44,7 +46,7 @@ class Cell1 implements ICell
         return `rgba(${x},${x},${x},1)`
     }
 
-    update(ns: INeighborhood) : Cell1
+    update(ns: Neighborhood<Cell1>) : Cell1
     {
         var z = this.z;
 
@@ -131,7 +133,7 @@ window.onload = () =>
     canvas.addEventListener("mousedown", event =>
     {
         mousedown = true;
-        console.log(event.button);
+        //console.log(event.button);
         doEvent(event.pageX, event.pageY, event.button);
     },false);
     

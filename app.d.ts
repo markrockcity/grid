@@ -10,7 +10,7 @@ declare class Cell1 implements ICell {
     readonly z: number;
     constructor(x: number, y: number, z: number);
     getRenderStyle(): string | CanvasGradient | CanvasPattern;
-    update(ns: INeighborhood): Cell1;
+    update(ns: Neighborhood<Cell1>): Cell1;
 }
 declare var canvas: HTMLCanvasElement;
 declare var ctx: CanvasRenderingContext2D;
