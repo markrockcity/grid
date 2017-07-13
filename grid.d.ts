@@ -1,7 +1,5 @@
 declare function randi(min: any, max: any): any;
 declare function rand(min: any, max: any): any;
-declare type UpdateICellFn = (c: ICell, ns: INeighborhood) => ICell;
-declare type UpdateCellFn<TCell extends ICell> = (c: TCell, ns: Neighborhood<TCell>) => TCell;
 interface ICell {
     getRenderStyle(): string | CanvasGradient | CanvasPattern;
     update(ns: INeighborhood): ICell;

@@ -12,8 +12,6 @@ function randi(min,max)
    return Math.random() * (max - min ) + min;
 }
 
-declare type UpdateICellFn = (c : ICell, ns: INeighborhood) => ICell
-declare type UpdateCellFn<TCell extends ICell> = (c : TCell, ns : Neighborhood<TCell>) => TCell;
 
 //CELL interface
 interface ICell
