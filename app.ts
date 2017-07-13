@@ -1,4 +1,4 @@
-﻿//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
+//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
 
 //GRID class
 class Grid1 extends Grid<Cell1>
