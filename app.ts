@@ -1,162 +1,25 @@
-﻿//random-integer()
-function randi(min,max)
+﻿//GRID class
+class Grid1 extends Grid<Cell1>
 {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-//random-float()
-function rand(min,max)
-{
-   return Math.random() * (max - min ) + min;
-}
-
-declare type UpdateCellFn = (c : Cell, ns : Neighborhood) => Cell;
-
-//GRID class
-class Grid
-{
-    private cells : Cell[] = [];
-
-    readonly width : number;
-    readonly height: number;
-
-    private grid1 : Cell[] = [];
-    private grid2 : Cell[] = [];
-
-    private readonly wall = new Cell(0,0,0);
-
-    
-    constructor(width: number, height: number)
+    createCell(): Cell1 
     {
-       this.width = width;
-       this.height = height;
-
-       for(var i=0; i<width*height; ++i)
-       {
-           this.grid1.push(new Cell(0,0,0));
-           this.grid2.push(new Cell(0,0,0));
-       }
-
-       this.cells = this.grid1;
+        return new Cell1(0,0,0);
     }
 
-    cell(x:number, y:number) : Cell
+    reflectLeftWall(c : Cell1) : boolean
     {
-        return this.cells[y*this.width+x];
+        return c.x < 0;
     }
 
-    
-    setCell(x:number, y:number, c:Cell)
+    reflectRightWall(c : Cell1) : boolean
     {
-        this.cells[y*this.width+x] = c;
+        return c.x > 0;
     }
-
-    neighbors(x:number, y:number) : Neighborhood
-    {
-        var ns = new Neighborhood();
-        var c  = this.cell(x,y);
-
-        if (x > 0)
-        {
-            //top-left
-            if (y > 0)
-            {
-                ns.cells[0][0] = this.cell(x-1, y-1);
-                ns.length++;
-            }
-
-            //left
-            ns.cells[1][0]=(this.cell(x-1,y));
-            ns.matrixes[1][0] = [[1,0,0],[0,1,0],[0.707,0,0.707]];
-            ns.length++;
-
-
-            //bottom-left
-            if (y < this.height-1)
-            {
-                ns.cells[2][0]=(this.cell(x-1,y+1));
-                ns.length++;
-            }
-
-        }
-        else
-        {
-            //left wall
-            ns.cells[1][0] = this.wall;
-            ns.matrixes[1][0] = [[c.x < 0 ? -1 : 1, 0, 0],[0,1,0],[0,0,1]];
-        }
-
-        //top
-        if (y > 0)
-        {
-            ns.cells[0][1] = this.cell(x,y-1);
-            ns.length++;
-        }
-
-        //bottom
-        if (y < this.height-1)
-        {
-            ns.cells[2][1] = this.cell(x,y+1);
-            ns.length++; 
-        }
-
-        
-        if (x < this.width-1)
-        {
-            //top-right
-            if (y > 0)
-            {
-                ns.cells[0][2] = this.cell(x+1, y-1);
-                ns.length++;
-            }
-
-            //right
-            ns.cells[1][1]=(this.cell(x+1,y));
-            ns.matrixes[1][1] = [[1,0,0],[0,1,0],[-0.707,0,0.707]];
-            ns.length++;
-
-            //bottom-right
-            if (y < this.height-1)
-            {
-                ns.cells[2][2]=(this.cell(x+1,y+1));
-                ns.length++;
-            }
-        }
-        else
-        {
-            //right-wall
-            ns.cells[1][1] = this.wall;
-            ns.matrixes[1][1] = [[c.x > 0 ? -1 : 1, 0, 0],[0,1,0],[0,0,1]];
-        }
-
-
-        return ns;
-    }
-
-    
-
-    update(updateCell : UpdateCellFn) : void
-    {
-        var nextGrid = (this.cells==this.grid1 ? this.grid2 : this.grid1);
-
-        for(var i=0; i < this.width; ++i)
-        for(var j=0; j < this.height; ++j)
-        {
-            var c  = this.cell(i,j);
-            var ns = this.neighbors(i,j);
-            
-            var nextCell = updateCell(c,ns);
-            nextGrid[j*this.width+i] = nextCell || c;
-        }
-
-        this.cells = nextGrid;
-    }
+   
 }
 
 //CELL class
-class Cell
+class Cell1
 {
     readonly x : number;
     readonly y : number;
@@ -170,43 +33,12 @@ class Cell
     }
 }
 
-//NEIGHBORHOOD class
-class Neighborhood
-{
-    length = 0;
-    readonly cells : Cell[][];
-    readonly matrixes: number[][][][] // e.g., matrixes[x][y] = [[...],[...],[...]]
-
-    constructor()
-    {
-        this.cells = [[null,null,null],[null,null],[null,null,null]];
-        this.matrixes = [[null,null,null],[null,null],[null,null,null]];
-    }
-    
-    cell(x:number, y:number) : Cell 
-    {
-        if (y==0) 
-            return this.cells[1][x==-1 ? 0 : 1]
-        else
-            return this.cells[y+1][x+1];
-    }    
-
-    matrix(x:number, y:number) : number[][]
-    {
-        if (y==0) 
-            return this.matrixes[1][x==-1 ? 0 : 1]
-        else
-            return this.matrixes[y+1][x+1];
-    }    
-}
-
-
 var canvas : HTMLCanvasElement;
 var ctx : CanvasRenderingContext2D;
 
 var ww, hh, w, h, mh, mw : number; //middle
 
-var grid : Grid;
+var grid : Grid1;
 var mousedown = false;
 
 //ONLOAD
@@ -227,7 +59,7 @@ window.onload = () =>
     w = (canvas.width / ww); 
     h = (canvas.height / hh);
 
-    grid = new Grid(ww,hh);
+    grid = new Grid1(ww,hh);
 
     //middle
     mh = hh/2, mw = ww/2;
@@ -243,7 +75,7 @@ window.onload = () =>
         x = Math.floor((pageX-canvas.offsetLeft) / w);
         y = Math.floor((pageY-canvas.offsetTop) / h);
         var c = grid.cell(x,y);
-        grid.setCell(x,y,new Cell(c.x, c.y, button == 2 ? 0 : 1));        
+        grid.setCell(x,y,new Cell1(c.x, c.y, button == 2 ? 0 : 1));        
     }
     
     canvas.addEventListener("mousedown", event =>
@@ -314,7 +146,7 @@ window.onload = () =>
 };
 
 //apply()
-function apply(c : Cell, m : number[][])
+function apply(c : Cell1, m : number[][])
 {
    var cx = c.x * m[0][0] + c.y * m[1][0] + c.z * m[2][0];
    var cy = c.x * m[0][1] + c.y * m[1][1] + c.z * m[2][1];
@@ -324,11 +156,11 @@ function apply(c : Cell, m : number[][])
    cy = Math.max(0,Math.min(1,cy)); if (isNaN(cy)) cy = 0;
    cz = Math.max(0,Math.min(1,cz)); if (isNaN(cz)) cz = 0;
 
-   return new Cell(cx,cy,cz);
+   return new Cell1(cx,cy,cz);
 }
 
 //sum()
-function sum(cells:Cell[]) : Cell
+function sum(cells:Cell1[]) : Cell1
 {
    var sum = [0,0,0];
    for(var i = 0; i < cells.length; ++i)
@@ -337,11 +169,11 @@ function sum(cells:Cell[]) : Cell
        sum[1] += cells[i].y;
        sum[2] += cells[i].z;
    }
-   return new Cell(sum[0],sum[1],sum[2]);
+   return new Cell1(sum[0],sum[1],sum[2]);
 }
 
 //zprod()
-function zprod(cells:Cell[]) : number
+function zprod(cells:Cell1[]) : number
 {
     var prod = 1;
     for(var i = 0; i < cells.length; ++i)
@@ -356,7 +188,7 @@ var avgRate  = 0;
 function update(framerate)
 {
 
-    grid.update((c:Cell, ns:Neighborhood) =>
+    grid.update((c:Cell1, ns : Neighborhood<Cell1>) =>
     {
         //var z = 0;
         
@@ -396,7 +228,7 @@ function update(framerate)
         //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
 
         //return r;
-        return new Cell(c.x, c.y, z);
+        return new Cell1(c.x, c.y, z);
        
     });
    

@@ -1,133 +1,38 @@
-//random-integer()
-function randi(min, max) {
-    min = Math.ceil(min);
-    max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-//random-float()
-function rand(min, max) {
-    return Math.random() * (max - min) + min;
-}
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 //GRID class
-var Grid = (function () {
-    function Grid(width, height) {
-        this.cells = [];
-        this.grid1 = [];
-        this.grid2 = [];
-        this.wall = new Cell(0, 0, 0);
-        this.width = width;
-        this.height = height;
-        for (var i = 0; i < width * height; ++i) {
-            this.grid1.push(new Cell(0, 0, 0));
-            this.grid2.push(new Cell(0, 0, 0));
-        }
-        this.cells = this.grid1;
+var Grid1 = (function (_super) {
+    __extends(Grid1, _super);
+    function Grid1() {
+        return _super !== null && _super.apply(this, arguments) || this;
     }
-    Grid.prototype.cell = function (x, y) {
-        return this.cells[y * this.width + x];
+    Grid1.prototype.createCell = function () {
+        return new Cell1(0, 0, 0);
     };
-    Grid.prototype.setCell = function (x, y, c) {
-        this.cells[y * this.width + x] = c;
+    Grid1.prototype.reflectLeftWall = function (c) {
+        return c.x < 0;
     };
-    Grid.prototype.neighbors = function (x, y) {
-        var ns = new Neighborhood();
-        var c = this.cell(x, y);
-        if (x > 0) {
-            //top-left
-            if (y > 0) {
-                ns.cells[0][0] = this.cell(x - 1, y - 1);
-                ns.length++;
-            }
-            //left
-            ns.cells[1][0] = (this.cell(x - 1, y));
-            ns.matrixes[1][0] = [[1, 0, 0], [0, 1, 0], [0.707, 0, 0.707]];
-            ns.length++;
-            //bottom-left
-            if (y < this.height - 1) {
-                ns.cells[2][0] = (this.cell(x - 1, y + 1));
-                ns.length++;
-            }
-        }
-        else {
-            //left wall
-            ns.cells[1][0] = this.wall;
-            ns.matrixes[1][0] = [[c.x < 0 ? -1 : 1, 0, 0], [0, 1, 0], [0, 0, 1]];
-        }
-        //top
-        if (y > 0) {
-            ns.cells[0][1] = this.cell(x, y - 1);
-            ns.length++;
-        }
-        //bottom
-        if (y < this.height - 1) {
-            ns.cells[2][1] = this.cell(x, y + 1);
-            ns.length++;
-        }
-        if (x < this.width - 1) {
-            //top-right
-            if (y > 0) {
-                ns.cells[0][2] = this.cell(x + 1, y - 1);
-                ns.length++;
-            }
-            //right
-            ns.cells[1][1] = (this.cell(x + 1, y));
-            ns.matrixes[1][1] = [[1, 0, 0], [0, 1, 0], [-0.707, 0, 0.707]];
-            ns.length++;
-            //bottom-right
-            if (y < this.height - 1) {
-                ns.cells[2][2] = (this.cell(x + 1, y + 1));
-                ns.length++;
-            }
-        }
-        else {
-            //right-wall
-            ns.cells[1][1] = this.wall;
-            ns.matrixes[1][1] = [[c.x > 0 ? -1 : 1, 0, 0], [0, 1, 0], [0, 0, 1]];
-        }
-        return ns;
+    Grid1.prototype.reflectRightWall = function (c) {
+        return c.x > 0;
     };
-    Grid.prototype.update = function (updateCell) {
-        var nextGrid = (this.cells == this.grid1 ? this.grid2 : this.grid1);
-        for (var i = 0; i < this.width; ++i)
-            for (var j = 0; j < this.height; ++j) {
-                var c = this.cell(i, j);
-                var ns = this.neighbors(i, j);
-                var nextCell = updateCell(c, ns);
-                nextGrid[j * this.width + i] = nextCell || c;
-            }
-        this.cells = nextGrid;
-    };
-    return Grid;
-}());
+    return Grid1;
+}(Grid));
 //CELL class
-var Cell = (function () {
-    function Cell(x, y, z) {
+var Cell1 = (function () {
+    function Cell1(x, y, z) {
         this.x = x;
         this.y = y;
         this.z = z;
     }
-    return Cell;
-}());
-//NEIGHBORHOOD class
-var Neighborhood = (function () {
-    function Neighborhood() {
-        this.length = 0;
-        this.cells = [[null, null, null], [null, null], [null, null, null]];
-        this.matrixes = [[null, null, null], [null, null], [null, null, null]];
-    }
-    Neighborhood.prototype.cell = function (x, y) {
-        if (y == 0)
-            return this.cells[1][x == -1 ? 0 : 1];
-        else
-            return this.cells[y + 1][x + 1];
-    };
-    Neighborhood.prototype.matrix = function (x, y) {
-        if (y == 0)
-            return this.matrixes[1][x == -1 ? 0 : 1];
-        else
-            return this.matrixes[y + 1][x + 1];
-    };
-    return Neighborhood;
+    return Cell1;
 }());
 var canvas;
 var ctx;
@@ -146,7 +51,7 @@ window.onload = function () {
     hh = Math.floor(canvas.height / factor);
     w = (canvas.width / ww);
     h = (canvas.height / hh);
-    grid = new Grid(ww, hh);
+    grid = new Grid1(ww, hh);
     //middle
     mh = hh / 2, mw = ww / 2;
     var d = 0.1;
@@ -158,7 +63,7 @@ window.onload = function () {
         x = Math.floor((pageX - canvas.offsetLeft) / w);
         y = Math.floor((pageY - canvas.offsetTop) / h);
         var c = grid.cell(x, y);
-        grid.setCell(x, y, new Cell(c.x, c.y, button == 2 ? 0 : 1));
+        grid.setCell(x, y, new Cell1(c.x, c.y, button == 2 ? 0 : 1));
     }
     canvas.addEventListener("mousedown", function (event) {
         mousedown = true;
@@ -216,7 +121,7 @@ function apply(c, m) {
     cz = Math.max(0, Math.min(1, cz));
     if (isNaN(cz))
         cz = 0;
-    return new Cell(cx, cy, cz);
+    return new Cell1(cx, cy, cz);
 }
 //sum()
 function sum(cells) {
@@ -226,7 +131,7 @@ function sum(cells) {
         sum[1] += cells[i].y;
         sum[2] += cells[i].z;
     }
-    return new Cell(sum[0], sum[1], sum[2]);
+    return new Cell1(sum[0], sum[1], sum[2]);
 }
 //zprod()
 function zprod(cells) {
@@ -265,7 +170,7 @@ function update(framerate) {
         //var s = sum(rs);
         //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
         //return r;
-        return new Cell(c.x, c.y, z);
+        return new Cell1(c.x, c.y, z);
     });
     avgRate = (framerate + lastRate) / 2;
     lastRate = framerate;
