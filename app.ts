@@ -1,4 +1,4 @@
-﻿//GRID class
+//GRID class
 class Grid1 extends Grid<Cell1>
 {
     
