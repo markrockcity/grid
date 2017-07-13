@@ -22,7 +22,6 @@ declare function sum(cells: Cell1[]): Cell1;
 declare function zprod(cells: Cell1[]): number;
 declare var lastRate: number;
 declare var avgRate: number;
-declare function updateCell1(c: Cell1, ns: Neighborhood<Cell1>): Cell1;
 declare function update(framerate: number): void;
 declare function render(): void;
 declare var then: number;

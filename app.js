@@ -176,32 +176,6 @@ function zprod(cells) {
 //UPDATE() ****************************************************************
 var lastRate = 0;
 var avgRate = 0;
-function updateCell1(c, ns) {
-    var z = c.z;
-    for (var i = -1; i < 2; ++i)
-        for (var j = -1; j < 2; ++j) {
-            if (i == 0 && j == 0)
-                continue;
-            //var f = i==0 || j==0 ? 1 : 0.7;
-            var n = ns.cell(i, j);
-            if (n != null) {
-                //var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
-                // var r = apply(c, ns.matrix(i,j));
-                //rs.push(r);
-                var d = n.z - c.z;
-                if (d > 0.01)
-                    z += 1 / 512;
-                else if (d < -0.01)
-                    z -= 1 / 512;
-                else if (randi(0, 1000) < 2)
-                    z -= 1 / 256;
-            }
-        }
-    //var s = sum(rs);
-    //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
-    //return r;
-    return new Cell1(c.x, c.y, z);
-}
 function update(framerate) {
     grid.update(framerate);
     avgRate = (framerate + lastRate) / 2;
