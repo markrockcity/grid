@@ -1,6 +1,13 @@
 ﻿//GRID class
 class Grid1 extends Grid<Cell1>
 {
+    
+    activateCell(x: number, y: number, button: number) 
+    {
+        var c = this.cell(x,y);
+        this.setCell(x,y,new Cell1(c.x, c.y, button == 2 ? 0 : 1));  
+    }
+
     createCell(): Cell1 
     {
         return new Cell1(0,0,0);
@@ -18,8 +25,7 @@ class Grid1 extends Grid<Cell1>
    
 }
 
-//CELL class
-class Cell1
+class Cell1 implements ICell
 {
     readonly x : number;
     readonly y : number;
@@ -31,6 +37,51 @@ class Cell1
         this.y = y;
         this.z = z;
     }
+
+    getRenderStyle(): string | CanvasGradient | CanvasPattern 
+    {
+        var x = Math.max(0,Math.min(255,Math.floor(255 * this.z)));
+        return `rgba(${x},${x},${x},1)`
+    }
+
+    update(ns: INeighborhood) : Cell1
+    {
+        var z = this.z;
+
+        for(var i=-1; i < 2; ++i)
+        for(var j=-1; j < 2; ++j)
+        {
+            if (i==0 && j==0) 
+                continue;
+            
+            //var f = i==0 || j==0 ? 1 : 0.7;
+
+            var n = <Cell1> ns.cell(i,j);    
+
+           
+            if (n != null)
+            {
+                //var c = new Cell((c.x-n.x)/ns.length, (c.y-n.y)/ns.length, (c.z-n.z)/ns.length);
+                // var r = apply(c, ns.matrix(i,j));
+                //rs.push(r);
+
+                var d = n.z - this.z;
+
+                if (d > 0.01)
+                    z += 1/512;
+                else if (d < -0.01)
+                    z -= 1/512;
+                else if (randi(0,1000) < 2)
+                    z -= 1/256
+            }
+        }
+               
+        //var s = sum(rs);
+        //var r = new Cell(s.x, s.y, 2 * ns.length * zprod(rs));
+
+        //return r;
+        return new Cell1(this.x, this.y, z);
+    }
 }
 
 var canvas : HTMLCanvasElement;
@@ -38,7 +89,7 @@ var ctx : CanvasRenderingContext2D;
 
 var ww, hh, w, h, mh, mw : number; //middle
 
-var grid : Grid1;
+var grid : IGrid;
 var mousedown = false;
 
 //ONLOAD
@@ -74,8 +125,7 @@ window.onload = () =>
     {
         x = Math.floor((pageX-canvas.offsetLeft) / w);
         y = Math.floor((pageY-canvas.offsetTop) / h);
-        var c = grid.cell(x,y);
-        grid.setCell(x,y,new Cell1(c.x, c.y, button == 2 ? 0 : 1));        
+        grid.activateCell(x,y,button);      
     }
     
     canvas.addEventListener("mousedown", event =>
@@ -185,16 +235,10 @@ function zprod(cells:Cell1[]) : number
 //UPDATE() ****************************************************************
 var lastRate = 0;
 var avgRate  = 0; 
-function update(framerate)
+
+function updateCell1(c:Cell1, ns : Neighborhood<Cell1>)
 {
-
-    grid.update((c:Cell1, ns : Neighborhood<Cell1>) =>
-    {
-        //var z = 0;
-        
-        //var rs : Cell[] = [];
-
-        var z = c.z;
+    var z = c.z;
 
         for(var i=-1; i < 2; ++i)
         for(var j=-1; j < 2; ++j)
@@ -229,10 +273,13 @@ function update(framerate)
 
         //return r;
         return new Cell1(c.x, c.y, z);
-       
-    });
-   
+}
 
+
+function update(framerate : number)
+{
+
+    grid.update(framerate);
     avgRate  = (framerate + lastRate)/2;
     lastRate = framerate;        
 }
@@ -257,20 +304,21 @@ function render()
 
         //var M = (Math.sqrt(c.x*c.x + c.y*c.y + c.z*c.z)); //magnitude
         //var M = c.z;
-        var x = Math.max(0,Math.min(255,Math.floor(255 * c.z)));
-        ctx.fillStyle = `rgba(${x},${x},${x},1)`
+        
+        ctx.fillStyle = c.getRenderStyle();
         ctx.fillRect(w * i , h * j, w+1, h+1);
     }
 
     var renderVector = false ;
-
-    if (renderVector)
+    if (c instanceof Cell1 && renderVector)
     {
+        var cell = <Cell1> c;
+        
         for(var i=0; i < grid.width; ++i)
         for(var j=0; j < grid.height; ++j)
         {
 
-            var c = grid.cell(i,j);
+            var cellc = grid.cell(i,j);
 
             //ctx.strokeStyle = "rgba(0,205,0,0.25)";
 
@@ -278,15 +326,15 @@ function render()
             var t = s * 5;
             var mw = w * i + w/2;
             var mh = h * j - h/2;
-            var lw = mw + c.x*s * w ;
-            var lh = mh + c.y*s * h;
+            var lw = mw + cell.x*s * w ;
+            var lh = mh + cell.y*s * h;
 
             //line
             var grd=ctx.createLinearGradient(mw,mh,lw,lh);
             grd.addColorStop(0,"rgba(0,10,0,0.7)");
             grd.addColorStop(1,"rgba(0,255,0,1)");
             ctx.strokeStyle = grd;
-            ctx.lineWidth = 1+c.z*t;
+            ctx.lineWidth = 1+cell.z*t;
             ctx.beginPath();
             ctx.moveTo(mw, mh+h+0.5);
             ctx.lineTo(lw, lh+h+0.5);
@@ -297,13 +345,12 @@ function render()
             //tip
             ctx.fillStyle = "rgba(255,0,0,0.7)";
             ctx.fillRect
-                (w * i + (w/2) + c.x*s * w - Math.abs(c.z*t)/2, 
-                 h * j + (h/2) + c.y*s * h - Math.abs(c.z*t)/2,
-                 0.5+Math.abs(c.z*t),
-                 0.5+Math.abs(c.z*t));
+                (w * i + (w/2) + cell.x*s * w - Math.abs(cell.z*t)/2, 
+                    h * j + (h/2) + cell.y*s * h - Math.abs(cell.z*t)/2,
+                    0.5+Math.abs(cell.z*t),
+                    0.5+Math.abs(cell.z*t));
         }
     }
-
 
     //dot
     ctx.fillStyle="red";

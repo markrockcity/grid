@@ -92,13 +92,13 @@ var Grid = (function () {
         }
         return ns;
     };
-    Grid.prototype.update = function (updateCell) {
+    Grid.prototype.update = function (framerate) {
         var nextGrid = (this.cells == this.grid1 ? this.grid2 : this.grid1);
         for (var i = 0; i < this.width; ++i)
             for (var j = 0; j < this.height; ++j) {
                 var c = this.cell(i, j);
                 var ns = this.neighbors(i, j);
-                var nextCell = updateCell(c, ns);
+                var nextCell = c.update(ns);
                 nextGrid[j * this.width + i] = nextCell || c;
             }
         this.cells = nextGrid;

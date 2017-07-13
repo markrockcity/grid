@@ -12,10 +12,29 @@ function randi(min,max)
    return Math.random() * (max - min ) + min;
 }
 
-declare type UpdateCellFn<TCell> = (c : TCell, ns : Neighborhood<TCell>) => TCell;
+declare type UpdateICellFn = (c : ICell, ns: INeighborhood) => ICell
+declare type UpdateCellFn<TCell extends ICell> = (c : TCell, ns : Neighborhood<TCell>) => TCell;
+
+//CELL interface
+interface ICell
+{
+    getRenderStyle() : string | CanvasGradient | CanvasPattern
+    update(ns: INeighborhood) : ICell
+}
+
+//GRID interface
+interface IGrid
+{
+    width : number;
+    height: number;
+    cell(x:number, y:number) : ICell
+    activateCell(x:number, y:number, data : number) //data = e.g., button pressed
+    neighbors(x:number, y:number) : INeighborhood
+    update(framerate : number)
+}
 
 //GRID<TCELL> class
-abstract class Grid<TCell>
+abstract class Grid<TCell extends ICell> implements IGrid
 {
     private cells : TCell[] = [];
 
@@ -43,6 +62,7 @@ abstract class Grid<TCell>
     }
 
     abstract createCell() : TCell;
+    abstract activateCell(x: number, y: number, data: number );
 
     reflectLeftWall(cell : TCell) : boolean
     {
@@ -147,9 +167,8 @@ abstract class Grid<TCell>
         return ns;
     }
 
-    
 
-    update(updateCell : UpdateCellFn<TCell>) : void
+    update(framerate : number) : void
     {
         var nextGrid = (this.cells==this.grid1 ? this.grid2 : this.grid1);
 
@@ -159,7 +178,7 @@ abstract class Grid<TCell>
             var c  = this.cell(i,j);
             var ns = this.neighbors(i,j);
             
-            var nextCell = updateCell(c,ns);
+            var nextCell = <TCell> c.update(ns);
             nextGrid[j*this.width+i] = nextCell || c;
         }
 
@@ -167,8 +186,14 @@ abstract class Grid<TCell>
     }
 }
 
+//NEIGHBORHOOD INTERFACE
+interface INeighborhood 
+{
+    cell(x:number, y:number) : ICell
+}
+
 //NEIGHBORHOOD class
-class Neighborhood<TCell>
+class Neighborhood<TCell extends ICell> implements INeighborhood
 {
     length = 0;
     readonly cells : TCell[][];
