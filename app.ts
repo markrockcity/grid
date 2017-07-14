@@ -1,6 +1,4 @@
-﻿//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
-
-//GRID class
+﻿//GRID class
 class Grid1 extends Grid<Cell1>
 {
     
@@ -75,6 +73,10 @@ class Cell1 implements ICell
                     z -= 1/512;
                 else if (randi(0,1000) < 2)
                     z -= 1/256
+                else if (rand(0,50000) < 2 && n.z < 0.2)
+                        z += 0.9;
+                else if (rand(0,50000) < 2 && n.z > 0.5)
+                    z -= 0.5;
             }
         }
                
@@ -128,6 +130,7 @@ window.onload = () =>
         x = Math.floor((pageX-canvas.offsetLeft) / w);
         y = Math.floor((pageY-canvas.offsetTop) / h);
         grid.activateCell(x,y,button);      
+        render();
     }
     
     canvas.addEventListener("mousedown", event =>
@@ -151,12 +154,13 @@ window.onload = () =>
     
     canvas.addEventListener("mousemove", event =>
     {
-        if (paused || !mousedown)
+        if (!mousedown)
             return;
 
         doEvent(event.pageX, event.pageY, event.button);
     }, 
     false);
+   
 
     canvas.addEventListener("touchmove", event =>
     {

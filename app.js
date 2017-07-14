@@ -1,4 +1,3 @@
-//compilation of https://github.com/markrockcity/grid/blob/master/app.ts
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
         ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
@@ -59,6 +58,10 @@ var Cell1 = (function () {
                         z -= 1 / 512;
                     else if (randi(0, 1000) < 2)
                         z -= 1 / 256;
+                    else if (rand(0, 50000) < 2 && n.z < 0.2)
+                        z += 0.9;
+                    else if (rand(0, 50000) < 2 && n.z > 0.5)
+                        z -= 0.5;
                 }
             }
         //var s = sum(rs);
@@ -97,6 +100,7 @@ window.onload = function () {
         x = Math.floor((pageX - canvas.offsetLeft) / w);
         y = Math.floor((pageY - canvas.offsetTop) / h);
         grid.activateCell(x, y, button);
+        render();
     }
     canvas.addEventListener("mousedown", function (event) {
         mousedown = true;
@@ -111,7 +115,7 @@ window.onload = function () {
         mousedown = false;
     }, false);
     canvas.addEventListener("mousemove", function (event) {
-        if (paused || !mousedown)
+        if (!mousedown)
             return;
         doEvent(event.pageX, event.pageY, event.button);
     }, false);
